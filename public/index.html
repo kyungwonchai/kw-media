@@ -254,6 +254,22 @@
       border-radius: 4px;
       font-weight: 600;
     }
+    .dl-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--cyan);
+      font-size: 0.72rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .dl-badge:hover {
+      background: rgba(6, 182, 212, 0.3);
+    }
 
     /* Cinema Modal Player */
     .cinema-modal {
@@ -517,7 +533,12 @@
   <div class="cinema-modal" id="cinema-modal">
     <div class="cinema-header">
       <div class="cinema-title" id="cinema-title">영화 제목</div>
-      <button class="cinema-close" onclick="closeCinema()">✕</button>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <button id="modal-download-btn" class="mode-btn" style="background: rgba(6, 182, 212, 0.2); border-color: var(--cyan); color: white;" onclick="downloadCurrentVideo()">
+          📥 원본 다운로드
+        </button>
+        <button class="cinema-close" onclick="closeCinema()">✕</button>
+      </div>
     </div>
     <div class="cinema-player-wrap">
       <video id="cinema-video" controls autoplay playsinline></video>
@@ -667,13 +688,17 @@
           `;
         } else {
           const isAudio = ['.mp3', '.m4a', '.flac', '.wav'].includes(item.ext);
+          const dlUrl = `${API_BASE}/media/download?folder=${currentFolder}&file=${encodeURIComponent(item.relPath)}`;
           return `
             <div class="media-card" onclick="openCinema('${item.relPath}', '${item.name.replace(/'/g, "\\'")}')">
               <div class="media-icon">${isAudio ? '🎵' : '🎬'}</div>
               <div class="media-title" title="${item.name}">${item.name}</div>
               <div class="media-meta">
                 <span>${formatBytes(item.size)}</span>
-                <span class="play-badge">▶ 재생</span>
+                <div style="display: flex; gap: 0.35rem; align-items: center;" onclick="event.stopPropagation()">
+                  <a href="${dlUrl}" class="dl-badge" title="파일 다운로드" download>📥 다운</a>
+                  <span class="play-badge" style="cursor: pointer;" onclick="openCinema('${item.relPath}', '${item.name.replace(/'/g, "\\'")}')">▶ 재생</span>
+                </div>
               </div>
             </div>
           `;
@@ -684,6 +709,17 @@
     let activeVideoPath = '';
     let activeVideoName = '';
     let isTranscodeMode = false;
+
+    function downloadCurrentVideo() {
+      if (!activeVideoPath) return;
+      const dlUrl = `${API_BASE}/media/download?folder=${currentFolder}&file=${encodeURIComponent(activeVideoPath)}`;
+      const a = document.createElement('a');
+      a.href = dlUrl;
+      a.download = activeVideoName || 'video.mp4';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
 
     function openCinema(relPath, name, forceTranscode = false) {
       const modal = document.getElementById('cinema-modal');

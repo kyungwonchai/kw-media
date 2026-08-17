@@ -338,6 +338,28 @@ apiRouter.get('/media/stream', (req, res) => {
   createReadStream(fullPath).pipe(res);
 });
 
+// File Download API (Forces browser file download with original or custom filename)
+apiRouter.get('/media/download', (req, res) => {
+  const { folder, file } = req.query;
+  const root = MEDIA_ROOTS[folder];
+  if (!root) return res.status(404).send('Folder not found');
+
+  const cleanFile = path.normalize(file).replace(/^(\.\.[\/\\])+/, '');
+  const fullPath = path.join(root.path, cleanFile);
+
+  if (!existsSync(fullPath)) {
+    return res.status(404).send('File not found');
+  }
+
+  const filename = path.basename(fullPath);
+  res.download(fullPath, filename, (err) => {
+    if (err && !res.headersSent) {
+      console.error('Download error:', err);
+      res.status(500).send('Download failed');
+    }
+  });
+});
+
 // Dual Routing support: /api and /kw-media/api
 app.use('/api', apiRouter);
 app.use('/kw-media/api', apiRouter);
