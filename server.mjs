@@ -268,8 +268,13 @@ apiRouter.get('/media/stream', (req, res) => {
       'pipe:1'
     ];
 
-    const ffmpeg = spawn('ffmpeg', ffmpegArgs);
+    const ffmpegBin = existsSync('/home/kw/.local/bin/kw-ffmpeg') ? '/home/kw/.local/bin/kw-ffmpeg' : 'ffmpeg';
+    const ffmpeg = spawn(ffmpegBin, ffmpegArgs);
     ffmpeg.stdout.pipe(res);
+
+    ffmpeg.stderr.on('data', (d) => {
+      // debug logging
+    });
 
     req.on('close', () => {
       ffmpeg.kill('SIGKILL');
