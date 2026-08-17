@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KW Media & Infra Hub</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(18, 24, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --cyan: #06b6d4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.08) 0%, transparent 40%);
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .brand-icon {
+      font-size: 2rem;
+      filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.5));
+    }
+    .brand-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .brand-subtitle {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.16);
+      transform: translateY(-2px);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+    }
+    .badge.online {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .badge.offline {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .card-desc {
+      font-size: 0.84rem;
+      color: var(--text-dim);
+      margin-bottom: 1.2rem;
+      line-height: 1.4;
+    }
+    .card-actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+    .btn-success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+    .btn-success:hover {
+      background: rgba(16, 185, 129, 0.25);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .disk-bar-container {
+      margin-top: 0.5rem;
+    }
+    .disk-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.4rem;
+    }
+    .disk-fill {
+      height: 100%;
+      background: var(--cyan);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .disk-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+    .links-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .link-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 0.85rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      transition: background 0.15s ease;
+    }
+    .link-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .link-main {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 500;
+      flex: 1;
+    }
+    .link-main:hover {
+      color: var(--accent);
+    }
+    .link-icon {
+      font-size: 1.1rem;
+    }
+    .link-delete {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+    }
+    .link-delete:hover {
+      color: var(--danger);
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .input {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .input:focus {
+      border-color: var(--accent);
+    }
+    .back-btn {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: color 0.15s;
+    }
+    .back-btn:hover {
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <span class="brand-icon">🎬</span>
+        <div>
+          <h1 class="brand-title">KW Media & Infra Hub</h1>
+          <p class="brand-subtitle">홈서버 미디어, VPN, 토렌트 & 비공개 인프라 통합 제어</p>
+        </div>
+      </div>
+      <a href="/kwboard/" class="back-btn">← kwBoard 대시보드</a>
+    </header>
+
+    <div class="grid">
+      <!-- 1. VPN 카드 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🇯🇵 VPN (JP-FREE)</span>
+          <span id="vpn-badge" class="badge offline"><span class="dot"></span><span id="vpn-status-text">확인 중...</span></span>
+        </div>
+        <p class="card-desc">일본 전용 WireGuard/OpenVPN 터널. 토렌트 다운로드 및 프라이버시 보호에 사용됩니다.</p>
+        <div class="card-actions">
+          <button id="vpn-btn" class="btn btn-primary" onclick="toggleVpn()">VPN 연결하기</button>
+        </div>
+      </div>
+
+      <!-- 2. qBittorrent 카드 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📥 qBittorrent</span>
+          <span id="qbittorrent-badge" class="badge offline"><span class="dot"></span><span id="qbittorrent-status-text">확인 중...</span></span>
+        </div>
+        <p class="card-desc">Docker 컨테이너 토렌트 클라이언트. 다운로드 파일은 미디어 폴더로 자동 저장됩니다.</p>
+        <div class="card-actions">
+          <button id="qbittorrent-btn" class="btn btn-outline" onclick="toggleQbittorrent()">실행</button>
+          <a href="http://172.30.1.70:8080" target="_blank" rel="noopener noreferrer" class="btn btn-outline">웹 UI (8080) ↗</a>
+        </div>
+      </div>
+
+      <!-- 3. Jellyfin 카드 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🎬 Jellyfin 미디어 서버</span>
+          <span id="jellyfin-badge" class="badge offline"><span class="dot"></span><span id="jellyfin-status-text">확인 중...</span></span>
+        </div>
+        <p class="card-desc">홈 스트리밍 미디어 서버. /home/kw/kmov 비디오 라이브러리를 브라우저/TV로 감상합니다.</p>
+        <div class="card-actions">
+          <button id="jellyfin-btn" class="btn btn-outline" onclick="toggleJellyfin()">실행</button>
+          <button class="btn btn-outline" onclick="openJellyfinIncognito()">시크릿창 열기 ↗</button>
+          <a href="http://172.30.1.70:8096" target="_blank" rel="noopener noreferrer" class="btn btn-outline">직접 접속 (8096) ↗</a>
+        </div>
+      </div>
+
+      <!-- 4. 미디어 저장소 용량 카드 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📂 미디어 디스크 (/home/kw/kmov)</span>
+          <span id="disk-badge" class="badge online">정상</span>
+        </div>
+        <p class="card-desc" id="disk-mount-desc">저장 경로: /home/kw/kmov</p>
+        <div class="disk-bar-container">
+          <div class="disk-bar"><div id="disk-fill" class="disk-fill" style="width: 0%"></div></div>
+          <div class="disk-info">
+            <span id="disk-used-text">사용량: 계산 중...</span>
+            <span id="disk-avail-text">잔여: 계산 중...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 비공개 사이트 바로가기 -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <div class="card-header">
+        <span class="card-title">🔗 비공개 사이트 바로가기</span>
+        <button class="btn btn-outline" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;" onclick="toggleAddLinkUI()">+ 사이트 추가</button>
+      </div>
+
+      <div id="add-link-form" style="display: none; margin-bottom: 1rem; padding: 0.8rem; background: rgba(0,0,0,0.25); border-radius: 8px;">
+        <div class="form-group">
+          <input type="text" id="new-link-name" class="input" placeholder="사이트 이름 (예: 토렌트큐큐)" />
+          <input type="url" id="new-link-url" class="input" placeholder="URL (예: https://...)" />
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem;">
+            <button class="btn btn-primary" style="font-size: 0.8rem; padding: 0.35rem 0.8rem;" onclick="addLink()">저장하기</button>
+            <button class="btn btn-outline" style="font-size: 0.8rem; padding: 0.35rem 0.8rem;" onclick="toggleAddLinkUI()">취소</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="links-container" class="links-list">
+        <p style="color: var(--text-dim); font-size: 0.85rem;">사이트 목록을 불러오는 중...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.pathname.startsWith('/kw-media') ? '/kw-media/api' : '/api';
+    let currentStatus = null;
+    let currentLinks = [];
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch(`${API_BASE}/status`);
+        if (!res.ok) return;
+        currentStatus = await res.json();
+        renderStatus();
+      } catch (e) {
+        console.error('Failed to fetch status:', e);
+      }
+    }
+
+    async function fetchLinks() {
+      try {
+        const res = await fetch(`${API_BASE}/links`);
+        if (!res.ok) return;
+        currentLinks = await res.json();
+        renderLinks();
+      } catch (e) {
+        console.error('Failed to fetch links:', e);
+      }
+    }
+
+    function renderStatus() {
+      if (!currentStatus) return;
+
+      // VPN
+      const vpnBadge = document.getElementById('vpn-badge');
+      const vpnText = document.getElementById('vpn-status-text');
+      const vpnBtn = document.getElementById('vpn-btn');
+      if (currentStatus.vpnConnected) {
+        vpnBadge.className = 'badge online';
+        vpnText.textContent = '연결됨 (Japan)';
+        vpnBtn.textContent = 'VPN 연결 끊기';
+        vpnBtn.className = 'btn btn-danger';
+      } else {
+        vpnBadge.className = 'badge offline';
+        vpnText.textContent = '연결 끊김';
+        vpnBtn.textContent = 'VPN 연결하기';
+        vpnBtn.className = 'btn btn-primary';
+      }
+
+      // qBittorrent
+      const qbBadge = document.getElementById('qbittorrent-badge');
+      const qbText = document.getElementById('qbittorrent-status-text');
+      const qbBtn = document.getElementById('qbittorrent-btn');
+      if (currentStatus.qbittorrentRunning) {
+        qbBadge.className = 'badge online';
+        qbText.textContent = '실행 중';
+        qbBtn.textContent = '중지';
+        qbBtn.className = 'btn btn-danger';
+      } else {
+        qbBadge.className = 'badge offline';
+        qbText.textContent = '중지됨';
+        qbBtn.textContent = '실행하기';
+        qbBtn.className = 'btn btn-success';
+      }
+
+      // Jellyfin
+      const jfBadge = document.getElementById('jellyfin-badge');
+      const jfText = document.getElementById('jellyfin-status-text');
+      const jfBtn = document.getElementById('jellyfin-btn');
+      if (currentStatus.jellyfinRunning) {
+        jfBadge.className = 'badge online';
+        jfText.textContent = '실행 중';
+        jfBtn.textContent = '중지';
+        jfBtn.className = 'btn btn-danger';
+      } else {
+        jfBadge.className = 'badge offline';
+        jfText.textContent = '중지됨';
+        jfBtn.textContent = '실행하기';
+        jfBtn.className = 'btn btn-success';
+      }
+
+      // Disk
+      if (currentStatus.disk) {
+        const d = currentStatus.disk;
+        document.getElementById('disk-mount-desc').textContent = `경로: ${currentStatus.mediaDir} (${d.mount})`;
+        document.getElementById('disk-fill').style.width = d.percent;
+        document.getElementById('disk-used-text').textContent = `사용: ${d.used} / 총 ${d.size} (${d.percent})`;
+        document.getElementById('disk-avail-text').textContent = `가용 공간: ${d.avail}`;
+      }
+    }
+
+    function renderLinks() {
+      const container = document.getElementById('links-container');
+      if (!currentLinks || currentLinks.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-dim); font-size: 0.85rem;">등록된 비공개 사이트가 없습니다. [+ 사이트 추가] 버튼을 눌러 등록하세요.</p>';
+        return;
+      }
+
+      container.innerHTML = currentLinks.map(l => `
+        <div class="link-item">
+          <a href="${l.url}" target="_blank" rel="noopener noreferrer" class="link-main">
+            <span class="link-icon">${l.icon || '🔗'}</span>
+            <span>${l.name}</span>
+            <span style="font-size: 0.75rem; color: var(--text-dim); margin-left: 0.2rem;">↗</span>
+          </a>
+          <button class="link-delete" onclick="deleteLink('${l.id}')" title="삭제">✕</button>
+        </div>
+      `).join('');
+    }
+
+    async function toggleVpn() {
+      if (!currentStatus) return;
+      const action = currentStatus.vpnConnected ? 'disconnect' : 'connect';
+      const btn = document.getElementById('vpn-btn');
+      btn.disabled = true;
+      try {
+        await fetch(`${API_BASE}/vpn/${action}`, { method: 'POST' });
+        await fetchStatus();
+      } catch (e) {
+        alert('VPN 변경 실패: ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function toggleQbittorrent() {
+      if (!currentStatus) return;
+      const action = currentStatus.qbittorrentRunning ? 'stop' : 'start';
+      const btn = document.getElementById('qbittorrent-btn');
+      btn.disabled = true;
+      try {
+        await fetch(`${API_BASE}/qbittorrent/${action}`, { method: 'POST' });
+        await fetchStatus();
+      } catch (e) {
+        alert('qBittorrent 변경 실패: ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function toggleJellyfin() {
+      if (!currentStatus) return;
+      const action = currentStatus.jellyfinRunning ? 'stop' : 'start';
+      const btn = document.getElementById('jellyfin-btn');
+      btn.disabled = true;
+      try {
+        await fetch(`${API_BASE}/jellyfin/${action}`, { method: 'POST' });
+        await fetchStatus();
+      } catch (e) {
+        alert('Jellyfin 변경 실패: ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function openJellyfinIncognito() {
+      try {
+        await fetch(`${API_BASE}/jellyfin/open`, { method: 'POST' });
+      } catch (e) {
+        alert('시크릿창 열기 실패: ' + e.message);
+      }
+    }
+
+    function toggleAddLinkUI() {
+      const form = document.getElementById('add-link-form');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function addLink() {
+      const name = document.getElementById('new-link-name').value.trim();
+      const url = document.getElementById('new-link-url').value.trim();
+      if (!name || !url) return alert('이름과 URL을 모두 입력하세요.');
+
+      const newLink = { id: Date.now().toString(), name, url, icon: '🔗' };
+      const next = [...currentLinks, newLink];
+      try {
+        await fetch(`${API_BASE}/links`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(next)
+        });
+        document.getElementById('new-link-name').value = '';
+        document.getElementById('new-link-url').value = '';
+        toggleAddLinkUI();
+        await fetchLinks();
+      } catch (e) {
+        alert('링크 저장 실패: ' + e.message);
+      }
+    }
+
+    async function deleteLink(id) {
+      if (!confirm('이 링크를 삭제하시겠습니까?')) return;
+      const next = currentLinks.filter(l => l.id !== id);
+      try {
+        await fetch(`${API_BASE}/links`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(next)
+        });
+        await fetchLinks();
+      } catch (e) {
+        alert('링크 삭제 실패: ' + e.message);
+      }
+    }
+
+    fetchStatus();
+    fetchLinks();
+    setInterval(fetchStatus, 4000);
+  </script>
+</body>
+</html>

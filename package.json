@@ -1,0 +1,13 @@
+{
+  "name": "kw-media",
+  "version": "1.0.0",
+  "description": "KW Media & Home Infrastructure Control Center (VPN, Jellyfin, qBittorrent, Private Links)",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "express": "^4.22.2"
+  }
+}
