@@ -389,11 +389,11 @@
       <!-- 1. VPN 카드 -->
       <div class="card">
         <div class="card-header">
-          <span class="card-title">🇯🇵 VPN (JP-FREE)</span>
+          <span class="card-title">🔒 보안 VPN (WireGuard)</span>
           <span id="vpn-badge" class="badge offline"><span class="dot"></span><span id="vpn-status-text">확인 중...</span></span>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 0.78rem; color: var(--text-dim);">일본 WireGuard 보안 터널</span>
+          <span style="font-size: 0.78rem; color: var(--text-dim);">전용 암호화 보안 터널</span>
           <button id="vpn-btn" class="btn btn-primary" style="font-size: 0.76rem; padding: 0.35rem 0.7rem;" onclick="toggleVpn()">연결하기</button>
         </div>
       </div>
@@ -656,7 +656,7 @@
       const vpnBtn = document.getElementById('vpn-btn');
       if (currentStatus.vpnConnected) {
         vpnBadge.className = 'badge online';
-        vpnText.textContent = '연결됨 (Japan)';
+        vpnText.textContent = '연결됨 (보안망)';
         vpnBtn.textContent = '끊기';
         vpnBtn.className = 'btn btn-danger';
       } else {
