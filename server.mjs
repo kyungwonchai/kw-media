@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 10150;
 
 const MEDIA_ROOTS = {
-  vod: { name: '🎬 VOD 영화관', path: '/home/kw/mysecret/vodfile_kw' },
+  vod: { name: '🎬 영화/드라마', path: '/home/kw/mysecret/vodfile_kw' },
   vjjj: { name: '🔥 액션', path: '/home/kw/mysecret/vjjj', protected: true },
   torrents: { name: '📥 다운로드 영상함', path: '/home/kw/kmov/videos' },
   personal: { name: '📂 개인영상/음악', path: '/home/kw/mysecret/personal' }
