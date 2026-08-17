@@ -474,14 +474,15 @@
 
   <script>
     const API_BASE = window.location.pathname.startsWith('/kw-media') ? '/kw-media/api' : '/api';
-    let currentFolder = 'vod';
+    let currentFolder = 'downloads';
     let currentSubpath = '';
     let currentStatus = null;
     let currentLinks = [];
     const FOLDERS = [
+      { key: 'downloads', name: '📥 다운로드 폴더 (Downloads)' },
       { key: 'vod', name: '🎬 영화/드라마' },
+      { key: 'torrents', name: '💾 토렌트 영상' },
       { key: 'vjjj', name: '🔥 액션 🔒', protected: true },
-      { key: 'torrents', name: '📥 다운로드 영상' },
       { key: 'personal', name: '📂 개인영상/음악' }
     ];
 
