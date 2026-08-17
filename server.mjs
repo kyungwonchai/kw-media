@@ -1,6 +1,6 @@
 import express from 'express';
 import { execSync, spawn } from 'child_process';
-import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync, createReadStream } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -223,9 +223,9 @@ apiRouter.get('/media/list', (req, res) => {
   });
 });
 
-// Real-time AAC Transcoding Video Stream API
+// Video Streaming API (Supports full Range Seeking / Native Fast Scrubbing & AAC Fallback)
 apiRouter.get('/media/stream', (req, res) => {
-  const { folder, file, start = 0 } = req.query;
+  const { folder, file, transcode } = req.query;
   const root = MEDIA_ROOTS[folder];
   if (!root) return res.status(404).send('Folder not found');
 
@@ -236,10 +236,68 @@ apiRouter.get('/media/stream', (req, res) => {
     return res.status(404).send('File not found');
   }
 
+  const stat = statSync(fullPath);
+  const fileSize = stat.size;
+  const ext = path.extname(cleanFile).toLowerCase();
+
+  // If transcode is not explicitly forced and file is standard MP4/WEBM, stream with full Range header support
+  if (transcode !== '1') {
+    const range = req.headers.range;
+    const mimeTypes = {
+      '.mp4': 'video/mp4',
+      '.m4v': 'video/mp4',
+      '.webm': 'video/webm',
+      '.mkv': 'video/mp4',
+      '.avi': 'video/x-msvideo',
+      '.mov': 'video/quicktime',
+      '.mp3': 'audio/mpeg',
+      '.m4a': 'audio/mp4',
+      '.flac': 'audio/flac',
+      '.wav': 'audio/wav'
+    };
+    const contentType = mimeTypes[ext] || 'video/mp4';
+
+    if (range) {
+      const match = range.match(/bytes=(\d*)-(\d*)/);
+      if (match) {
+        const start = match[1] ? parseInt(match[1], 10) : 0;
+        const end = match[2] ? parseInt(match[2], 10) : fileSize - 1;
+
+        if (start >= fileSize || end >= fileSize || start > end) {
+          res.status(416).setHeader('Content-Range', `bytes */${fileSize}`).end();
+          return;
+        }
+
+        const chunksize = (end - start) + 1;
+        const fileStream = createReadStream(fullPath, { start, end });
+        const head = {
+          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': contentType,
+        };
+
+        res.writeHead(206, head);
+        fileStream.pipe(res);
+        return;
+      }
+    }
+
+    const head = {
+      'Content-Length': fileSize,
+      'Content-Type': contentType,
+      'Accept-Ranges': 'bytes',
+    };
+    res.writeHead(200, head);
+    createReadStream(fullPath).pipe(res);
+    return;
+  }
+
+  // Fallback Transcode Mode
+  const startTime = parseFloat(req.query.start) || 0;
   res.setHeader('Content-Type', 'video/mp4');
   res.setHeader('Accept-Ranges', 'none');
 
-  const startTime = parseFloat(start) || 0;
   const ffmpegArgs = [
     '-ss', String(startTime),
     '-i', fullPath,
@@ -253,12 +311,7 @@ apiRouter.get('/media/stream', (req, res) => {
   ];
 
   const ffmpeg = spawn('ffmpeg', ffmpegArgs);
-
   ffmpeg.stdout.pipe(res);
-
-  ffmpeg.stderr.on('data', (data) => {
-    // console.log(`FFmpeg: ${data}`);
-  });
 
   req.on('close', () => {
     ffmpeg.kill('SIGKILL');
