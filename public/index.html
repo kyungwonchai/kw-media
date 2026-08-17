@@ -308,9 +308,62 @@
     }
     video {
       width: 100%;
-      max-height: 75vh;
+      max-height: 72vh;
       display: block;
       outline: none;
+    }
+    .cinema-toolbar {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+    }
+    .seek-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .seek-btn {
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: white;
+      padding: 0.4rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s;
+    }
+    .seek-btn:hover {
+      background: var(--accent);
+      transform: scale(1.05);
+    }
+    .mode-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: var(--text-dim);
+      padding: 0.4rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--success);
+      color: #6ee7b7;
     }
     /* Password Modal */
     .pw-modal {
@@ -469,7 +522,21 @@
     <div class="cinema-player-wrap">
       <video id="cinema-video" controls autoplay playsinline></video>
     </div>
-    <p class="cinema-hint">⚡ 고화질 원본 스트리밍 & 전체 탐색바 즉시 이동(Seek) 지원</p>
+    <div class="cinema-toolbar">
+      <div class="seek-controls">
+        <button class="seek-btn" onclick="seekVideo(-10)">⏪ -10초</button>
+        <button class="seek-btn" onclick="seekVideo(10)">⏩ +10초</button>
+        <button class="seek-btn" style="background: rgba(255,255,255,0.1); border-color: var(--card-border);" onclick="seekVideo(-30)">-30초</button>
+        <button class="seek-btn" style="background: rgba(255,255,255,0.1); border-color: var(--card-border);" onclick="seekVideo(30)">+30초</button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <button id="audio-fix-btn" class="mode-btn" onclick="toggleAudioFix()" title="MKV EAC3/AC3/DTS 오디오가 안 들릴 때 클릭하세요">
+          🔊 오디오 호환 재생 (소리 안 날 때)
+        </button>
+        <button class="mode-btn" onclick="toggleFullscreen()">⛶ 전체화면</button>
+      </div>
+    </div>
+    <p class="cinema-hint">⚡ 단축키: 좌/우 방향키 (±5초), J/L (±10초), 스페이스바 (재생/정지), F (전체화면)</p>
   </div>
 
   <script>
@@ -614,16 +681,84 @@
       }).join('');
     }
 
-    function openCinema(relPath, name) {
+    let activeVideoPath = '';
+    let activeVideoName = '';
+    let isTranscodeMode = false;
+
+    function openCinema(relPath, name, forceTranscode = false) {
       const modal = document.getElementById('cinema-modal');
       const video = document.getElementById('cinema-video');
       const title = document.getElementById('cinema-title');
+      const audioBtn = document.getElementById('audio-fix-btn');
+
+      activeVideoPath = relPath;
+      activeVideoName = name;
+      isTranscodeMode = forceTranscode;
 
       title.textContent = name;
-      const streamUrl = `${API_BASE}/media/stream?folder=${currentFolder}&file=${encodeURIComponent(relPath)}`;
+      
+      let streamUrl = `${API_BASE}/media/stream?folder=${currentFolder}&file=${encodeURIComponent(relPath)}`;
+      if (forceTranscode) {
+        streamUrl += '&transcode=1';
+        audioBtn.classList.add('active');
+        audioBtn.textContent = '🔊 오디오 호환 재생 중 (AAC)';
+      } else {
+        audioBtn.classList.remove('active');
+        audioBtn.textContent = '🔊 오디오 호환 재생 (소리 안 날 때)';
+      }
+
       video.src = streamUrl;
       modal.classList.add('open');
       video.play().catch(() => {});
+    }
+
+    function toggleAudioFix() {
+      if (!activeVideoPath) return;
+      const video = document.getElementById('cinema-video');
+      const curTime = video.currentTime || 0;
+      isTranscodeMode = !isTranscodeMode;
+
+      const audioBtn = document.getElementById('audio-fix-btn');
+      let streamUrl = `${API_BASE}/media/stream?folder=${currentFolder}&file=${encodeURIComponent(activeVideoPath)}`;
+      if (isTranscodeMode) {
+        streamUrl += `&transcode=1&start=${Math.floor(curTime)}`;
+        audioBtn.classList.add('active');
+        audioBtn.textContent = '🔊 오디오 호환 재생 중 (AAC)';
+      } else {
+        audioBtn.classList.remove('active');
+        audioBtn.textContent = '🔊 오디오 호환 재생 (소리 안 날 때)';
+      }
+
+      video.src = streamUrl;
+      if (!isTranscodeMode) {
+        video.currentTime = curTime;
+      }
+      video.play().catch(() => {});
+    }
+
+    function seekVideo(seconds) {
+      const video = document.getElementById('cinema-video');
+      if (!video) return;
+      
+      if (isTranscodeMode) {
+        const nextTime = Math.max(0, (video.currentTime || 0) + seconds);
+        let streamUrl = `${API_BASE}/media/stream?folder=${currentFolder}&file=${encodeURIComponent(activeVideoPath)}&transcode=1&start=${Math.floor(nextTime)}`;
+        video.src = streamUrl;
+        video.play().catch(() => {});
+      } else {
+        video.currentTime = Math.max(0, Math.min(video.duration || 999999, video.currentTime + seconds));
+      }
+    }
+
+    function toggleFullscreen() {
+      const video = document.getElementById('cinema-video');
+      if (!video) return;
+      if (!document.fullscreenElement) {
+        if (video.requestFullscreen) video.requestFullscreen();
+        else if (video.webkitRequestFullscreen) video.webkitRequestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
     }
 
     function closeCinema() {
@@ -632,6 +767,9 @@
       video.pause();
       video.removeAttribute('src');
       video.load();
+      activeVideoPath = '';
+      activeVideoName = '';
+      isTranscodeMode = false;
       modal.classList.remove('open');
     }
 
@@ -779,7 +917,40 @@
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeCinema();
+      const modal = document.getElementById('cinema-modal');
+      const isModalOpen = modal.classList.contains('open');
+      const video = document.getElementById('cinema-video');
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+
+      if (activeTag === 'input' || activeTag === 'textarea') return;
+
+      if (e.key === 'Escape') {
+        closeCinema();
+        closePasswordModal();
+      }
+
+      if (isModalOpen && video) {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          seekVideo(-5);
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          seekVideo(5);
+        } else if (e.key === 'j' || e.key === 'J') {
+          e.preventDefault();
+          seekVideo(-10);
+        } else if (e.key === 'l' || e.key === 'L') {
+          e.preventDefault();
+          seekVideo(10);
+        } else if (e.key === ' ' || e.code === 'Space') {
+          e.preventDefault();
+          if (video.paused) video.play();
+          else video.pause();
+        } else if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault();
+          toggleFullscreen();
+        }
+      }
     });
 
     initTabs();

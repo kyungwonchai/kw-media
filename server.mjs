@@ -248,87 +248,89 @@ apiRouter.get('/media/stream', (req, res) => {
   const fileSize = stat.size;
   const ext = path.extname(cleanFile).toLowerCase();
 
-  // If transcode is not explicitly forced and file is standard MP4/WEBM, stream with full Range header support
-  if (transcode !== '1') {
-    const range = req.headers.range;
-    const mimeTypes = {
-      '.mp4': 'video/mp4',
-      '.m4v': 'video/mp4',
-      '.webm': 'video/webm',
-      '.mkv': 'video/mp4',
-      '.avi': 'video/x-msvideo',
-      '.mov': 'video/quicktime',
-      '.mp3': 'audio/mpeg',
-      '.m4a': 'audio/mp4',
-      '.flac': 'audio/flac',
-      '.wav': 'audio/wav'
-    };
-    const contentType = mimeTypes[ext] || 'video/mp4';
+  // If transcode is requested, use ffmpeg with fast seeking
+  if (transcode === '1') {
+    const startTime = parseFloat(req.query.start) || 0;
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Accept-Ranges', 'none');
 
-    if (range) {
-      const match = range.match(/bytes=(\d*)-(\d*)/);
-      if (match) {
-        const start = match[1] ? parseInt(match[1], 10) : 0;
-        const end = match[2] ? parseInt(match[2], 10) : fileSize - 1;
+    const ffmpegArgs = [
+      '-ss', String(startTime),
+      '-i', fullPath,
+      '-map', '0:v:0',
+      '-map', '0:a:0?',
+      '-c:v', 'copy',
+      '-c:a', 'aac',
+      '-b:a', '192k',
+      '-ac', '2',
+      '-movflags', 'frag_keyframe+empty_moov+default_base_moof+faststart',
+      '-f', 'mp4',
+      'pipe:1'
+    ];
 
-        if (start >= fileSize || end >= fileSize || start > end) {
-          res.status(416).setHeader('Content-Range', `bytes */${fileSize}`).end();
-          return;
-        }
+    const ffmpeg = spawn('ffmpeg', ffmpegArgs);
+    ffmpeg.stdout.pipe(res);
 
-        const chunksize = (end - start) + 1;
-        const fileStream = createReadStream(fullPath, { start, end });
-        const head = {
-          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': chunksize,
-          'Content-Type': contentType,
-        };
+    req.on('close', () => {
+      ffmpeg.kill('SIGKILL');
+    });
 
-        res.writeHead(206, head);
-        fileStream.pipe(res);
-        return;
-      }
-    }
-
-    const head = {
-      'Content-Length': fileSize,
-      'Content-Type': contentType,
-      'Accept-Ranges': 'bytes',
-    };
-    res.writeHead(200, head);
-    createReadStream(fullPath).pipe(res);
+    ffmpeg.on('error', (err) => {
+      console.error('FFmpeg process error:', err);
+      if (!res.headersSent) res.status(500).send('Streaming error');
+    });
     return;
   }
 
-  // Fallback Transcode Mode
-  const startTime = parseFloat(req.query.start) || 0;
-  res.setHeader('Content-Type', 'video/mp4');
-  res.setHeader('Accept-Ranges', 'none');
+  // Standard Range streaming
+  const range = req.headers.range;
+  const mimeTypes = {
+    '.mp4': 'video/mp4',
+    '.m4v': 'video/mp4',
+    '.webm': 'video/webm',
+    '.mkv': 'video/mp4',
+    '.avi': 'video/x-msvideo',
+    '.mov': 'video/quicktime',
+    '.mp3': 'audio/mpeg',
+    '.m4a': 'audio/mp4',
+    '.flac': 'audio/flac',
+    '.wav': 'audio/wav'
+  };
+  const contentType = mimeTypes[ext] || 'video/mp4';
 
-  const ffmpegArgs = [
-    '-ss', String(startTime),
-    '-i', fullPath,
-    '-c:v', 'copy',
-    '-c:a', 'aac',
-    '-b:a', '192k',
-    '-ac', '2',
-    '-movflags', 'frag_keyframe+empty_moov+default_base_moof+faststart',
-    '-f', 'mp4',
-    'pipe:1'
-  ];
+  if (range) {
+    const match = range.match(/bytes=(\d*)-(\d*)/);
+    if (match) {
+      const start = match[1] ? parseInt(match[1], 10) : 0;
+      const end = match[2] ? parseInt(match[2], 10) : fileSize - 1;
 
-  const ffmpeg = spawn('ffmpeg', ffmpegArgs);
-  ffmpeg.stdout.pipe(res);
+      if (start >= fileSize || end >= fileSize || start > end) {
+        res.status(416).setHeader('Content-Range', `bytes */${fileSize}`).end();
+        return;
+      }
 
-  req.on('close', () => {
-    ffmpeg.kill('SIGKILL');
-  });
+      const chunksize = (end - start) + 1;
+      const fileStream = createReadStream(fullPath, { start, end });
+      const head = {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': contentType,
+      };
 
-  ffmpeg.on('error', (err) => {
-    console.error('FFmpeg process error:', err);
-    if (!res.headersSent) res.status(500).send('Streaming error');
-  });
+      res.writeHead(206, head);
+      fileStream.pipe(res);
+      return;
+    }
+  }
+
+  const head = {
+    'Content-Length': fileSize,
+    'Content-Type': contentType,
+    'Accept-Ranges': 'bytes',
+  };
+  res.writeHead(200, head);
+  createReadStream(fullPath).pipe(res);
 });
 
 // Dual Routing support: /api and /kw-media/api
