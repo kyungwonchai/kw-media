@@ -426,25 +426,38 @@
     let currentSubpath = '';
     let currentStatus = null;
     let currentLinks = [];
+    let actionUnlocked = false;
 
     const FOLDERS = [
       { key: 'vod', name: '🎬 VOD 영화관' },
-      { key: 'vjjj', name: '🔒 시크릿 비디오' },
+      { key: 'vjjj', name: '🔥 액션 🔒', protected: true },
       { key: 'torrents', name: '📥 다운로드 영상' },
-      { key: 'myvideos', name: '📹 개인 보관 영상' },
-      { key: 'music', name: '🎵 시크릿 음악' }
+      { key: 'personal', name: '📂 개인영상/음악' }
     ];
 
     function initTabs() {
       const container = document.getElementById('folder-tabs');
-      container.innerHTML = FOLDERS.map(f => `
-        <button class="folder-tab ${f.key === currentFolder ? 'active' : ''}" onclick="selectFolder('${f.key}')">
-          ${f.name}
-        </button>
-      `).join('');
+      container.innerHTML = FOLDERS.map(f => {
+        const isAction = f.key === 'vjjj';
+        const label = isAction && actionUnlocked ? '🔥 액션 🔓' : f.name;
+        return `
+          <button class="folder-tab ${f.key === currentFolder ? 'active' : ''}" onclick="selectFolder('${f.key}')">
+            ${label}
+          </button>
+        `;
+      }).join('');
     }
 
     function selectFolder(key) {
+      if (key === 'vjjj' && !actionUnlocked) {
+        const pw = prompt('🔥 액션 보관함 비밀번호를 입력하세요:');
+        if (pw === 'kw1121') {
+          actionUnlocked = true;
+        } else {
+          if (pw !== null) alert('비밀번호가 일치하지 않습니다.');
+          return;
+        }
+      }
       currentFolder = key;
       currentSubpath = '';
       initTabs();

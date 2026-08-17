@@ -10,10 +10,9 @@ const PORT = process.env.PORT || 10150;
 
 const MEDIA_ROOTS = {
   vod: { name: '🎬 VOD 영화관', path: '/home/kw/mysecret/vodfile_kw' },
-  vjjj: { name: '🔒 시크릿 비디오', path: '/home/kw/mysecret/vjjj' },
+  vjjj: { name: '🔥 액션', path: '/home/kw/mysecret/vjjj', protected: true },
   torrents: { name: '📥 다운로드 영상함', path: '/home/kw/kmov/videos' },
-  myvideos: { name: '📹 개인 보관 영상', path: '/home/kw/kmov/my-videos' },
-  music: { name: '🎵 시크릿 음악', path: '/home/kw/mysecret/musicfile_kw' }
+  personal: { name: '📂 개인영상/음악', path: '/home/kw/mysecret/personal' }
 };
 
 const QBITTORRENT_CONTAINER = 'qbittorrent';
@@ -111,23 +110,31 @@ function scanDirectory(basePath, currentRel = '') {
       const relPath = currentRel ? `${currentRel}/${ent.name}` : ent.name;
       const fullPath = path.join(basePath, relPath);
       
-      if (ent.isDirectory()) {
+      let isDir = false;
+      let isFile = false;
+      let size = 0;
+      let mtime = 0;
+
+      try {
+        const st = statSync(fullPath);
+        isDir = st.isDirectory();
+        isFile = st.isFile();
+        size = st.size;
+        mtime = st.mtimeMs;
+      } catch {
+        continue;
+      }
+
+      if (isDir) {
         items.push({
           name: ent.name,
           relPath,
           isDir: true,
           ext: ''
         });
-      } else if (ent.isFile()) {
+      } else if (isFile) {
         const ext = path.extname(ent.name).toLowerCase();
         if (VIDEO_EXTS.has(ext)) {
-          let size = 0;
-          let mtime = 0;
-          try {
-            const st = statSync(fullPath);
-            size = st.size;
-            mtime = st.mtimeMs;
-          } catch {}
           items.push({
             name: ent.name,
             relPath,
