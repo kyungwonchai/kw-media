@@ -312,14 +312,66 @@
       display: block;
       outline: none;
     }
-    .cinema-hint {
-      margin-top: 0.6rem;
-      font-size: 0.78rem;
-      color: var(--text-dim);
+    /* Password Modal */
+    .pw-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 2000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .pw-modal.open {
+      display: flex;
+    }
+    .pw-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+      text-align: center;
+    }
+    .pw-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: white;
+      font-size: 1.1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin: 1.2rem 0;
+      text-align: center;
+      letter-spacing: 4px;
+      outline: none;
+    }
+    .pw-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
     }
   </style>
 </head>
 <body>
+  <!-- 액션 보관함 비밀번호 모달 -->
+  <div class="pw-modal" id="pw-modal">
+    <div class="pw-box">
+      <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔥 🔒</div>
+      <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem;">액션 보관함 인증</h3>
+      <p style="font-size: 0.8rem; color: var(--text-dim);">보안 비밀번호를 입력하세요.</p>
+      <input type="password" id="pw-input" class="pw-input" placeholder="••••••••" autocomplete="off" />
+      <div style="display: flex; gap: 0.5rem; justify-content: center;">
+        <button class="btn btn-primary" style="flex: 1; padding: 0.6rem;" onclick="confirmActionPassword()">확인</button>
+        <button class="btn btn-outline" style="flex: 1; padding: 0.6rem;" onclick="closePasswordModal()">취소</button>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <header>
       <div class="brand">
@@ -426,8 +478,6 @@
     let currentSubpath = '';
     let currentStatus = null;
     let currentLinks = [];
-    let actionUnlocked = false;
-
     const FOLDERS = [
       { key: 'vod', name: '🎬 VOD 영화관' },
       { key: 'vjjj', name: '🔥 액션 🔒', protected: true },
@@ -437,32 +487,56 @@
 
     function initTabs() {
       const container = document.getElementById('folder-tabs');
-      container.innerHTML = FOLDERS.map(f => {
-        const isAction = f.key === 'vjjj';
-        const label = isAction && actionUnlocked ? '🔥 액션 🔓' : f.name;
-        return `
-          <button class="folder-tab ${f.key === currentFolder ? 'active' : ''}" onclick="selectFolder('${f.key}')">
-            ${label}
-          </button>
-        `;
-      }).join('');
+      container.innerHTML = FOLDERS.map(f => `
+        <button class="folder-tab ${f.key === currentFolder ? 'active' : ''}" onclick="selectFolder('${f.key}')">
+          ${f.name}
+        </button>
+      `).join('');
     }
 
     function selectFolder(key) {
-      if (key === 'vjjj' && !actionUnlocked) {
-        const pw = prompt('🔥 액션 보관함 비밀번호를 입력하세요:');
-        if (pw === 'kw1121') {
-          actionUnlocked = true;
-        } else {
-          if (pw !== null) alert('비밀번호가 일치하지 않습니다.');
-          return;
-        }
+      if (key === 'vjjj') {
+        openPasswordModal();
+        return;
       }
       currentFolder = key;
       currentSubpath = '';
       initTabs();
       fetchFiles();
     }
+
+    function openPasswordModal() {
+      const modal = document.getElementById('pw-modal');
+      const input = document.getElementById('pw-input');
+      input.value = '';
+      modal.classList.add('open');
+      setTimeout(() => input.focus(), 100);
+    }
+
+    function closePasswordModal() {
+      const modal = document.getElementById('pw-modal');
+      modal.classList.remove('open');
+    }
+
+    function confirmActionPassword() {
+      const input = document.getElementById('pw-input');
+      if (input.value === 'kw1121') {
+        closePasswordModal();
+        currentFolder = 'vjjj';
+        currentSubpath = '';
+        initTabs();
+        fetchFiles();
+      } else {
+        alert('비밀번호가 일치하지 않습니다.');
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    document.getElementById('pw-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmActionPassword();
+      if (e.key === 'Escape') closePasswordModal();
+    });
 
     function goToSubpath(sub) {
       currentSubpath = sub;
