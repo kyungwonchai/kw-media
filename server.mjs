@@ -10,7 +10,6 @@ const PORT = process.env.PORT || 10150;
 
 const MEDIA_ROOTS = {
   downloads: { name: '📥 다운로드 폴더 (Downloads)', path: '/home/kw/Downloads' },
-  vod: { name: '🎬 영화/드라마', path: '/home/kw/mysecret/vodfile_kw' },
   torrents: { name: '💾 토렌트 영상함', path: '/home/kw/kmov/videos' },
   vjjj: { name: '🔥 액션', path: '/home/kw/mysecret/vjjj', protected: true },
   personal: { name: '📂 개인영상/음악', path: '/home/kw/mysecret/personal' }
