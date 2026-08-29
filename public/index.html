@@ -883,6 +883,21 @@
       } catch (e) {}
     }
 
+    async function openLinkIncognito(url, event) {
+      if (event) event.preventDefault();
+      try {
+        const res = await fetch(`${API_BASE}/open-incognito`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        if (!res.ok) throw new Error('API failed');
+      } catch (e) {
+        // Fallback: regular window open if server call fails
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    }
+
     function renderLinks() {
       const container = document.getElementById('links-container');
       if (!currentLinks || currentLinks.length === 0) {
@@ -890,11 +905,11 @@
         return;
       }
       container.innerHTML = currentLinks.map(l => `
-        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.03); border-radius: 6px;">
-          <a href="${l.url}" target="_blank" rel="noopener noreferrer" style="color: var(--cyan); text-decoration: none; font-size: 0.82rem;">
-            ${l.icon || '🔗'} ${l.name} ↗
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.45rem 0.6rem; background: rgba(255,255,255,0.03); border-radius: 6px;">
+          <a href="${l.url}" onclick="openLinkIncognito('${l.url}', event)" style="color: var(--cyan); text-decoration: none; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+            ${l.icon || '🔗'} <strong>${l.name}</strong> <span style="font-size: 0.72rem; color: #a5b4fc; background: rgba(99,102,241,0.2); padding: 0.1rem 0.35rem; border-radius: 4px;">🕵️ 시크릿창</span>
           </a>
-          <button onclick="deleteLink('${l.id}')" style="background: none; border: none; color: var(--text-dim); cursor: pointer;">✕</button>
+          <button onclick="deleteLink('${l.id}')" style="background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 0.85rem;" title="삭제">✕</button>
         </div>
       `).join('');
     }

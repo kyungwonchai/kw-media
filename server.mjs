@@ -214,6 +214,21 @@ apiRouter.post('/links', (req, res) => {
   res.json({ ok: true });
 });
 
+apiRouter.post('/open-incognito', (req, res) => {
+  const { url } = req.body;
+  if (!url || typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
+    return res.status(400).json({ error: 'Valid URL is required' });
+  }
+  try {
+    const env = { ...process.env, DISPLAY: process.env.DISPLAY || ':0' };
+    spawn('google-chrome', ['--incognito', url], { detached: true, stdio: 'ignore', env }).unref();
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
 // Media Files Listing API
 apiRouter.get('/media/list', (req, res) => {
   const { folder, subpath = '' } = req.query;
